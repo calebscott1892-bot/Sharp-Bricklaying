@@ -18,7 +18,8 @@ The site is multi-page as of 6 Sep 2026. Routes come from directories, not from 
 - `index.html` — hero, services, about, a three-project **featured work** teaser, a contact band. It no longer holds the portfolio or the enquiry form.
 - `gallery/index.html` — the full portfolio: the two standalone groups plus the tabbed job panels. This is where gallery work goes now, not `index.html`.
 - `contact/index.html` — the enquiry form, contact details, and the "what to send" guidance.
-- `articles/` — the Site Notes section. Deliberately uses its own chrome (`css/articles.css`, `.site-topbar`) rather than the main nav, because it is a reading surface. If you unify it, `styles.css` sets `section { opacity: 0 }` and relies on `main.js` to reveal, so article sections would vanish without that script.
+- `articles/` — the Site Notes section. Currently an index with nothing published. Deliberately uses its own chrome (`css/articles.css`, `.site-topbar`) rather than the main nav, because it is a reading surface. If you unify it, `styles.css` sets `section { opacity: 0 }` and relies on `main.js` to reveal, so article sections would vanish without that script.
+- `_drafts/` — written but not client-approved. Excluded from the deployment by `.vercelignore`, and the validator fails if that line goes missing or if anything served links into it. **Nothing goes live under Sharp's name until Luke has asked for it.** The first article was published on 6 Sep 2026 and pulled the same day for exactly this reason.
 
 **Pages below the root reference assets root-relative** (`/images/…`, `/css/…`, `/js/…`). A relative `images/…` on `/gallery` resolves to `/gallery/images/…` and 404s. `index.html` is at the root so it keeps relative paths.
 

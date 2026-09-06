@@ -216,8 +216,7 @@ const linkSources = {
   home: pages.home,
   gallery: pages.gallery,
   contact: pages.contact,
-  articles: read('articles/index.html'),
-  article: read('articles/what-to-ask-before-you-accept-a-quote/index.html')
+  articles: read('articles/index.html')
 };
 
 Object.entries(linkSources).forEach(([name, html]) => {
@@ -235,13 +234,24 @@ const sitemap = read('sitemap.xml');
     assert(resolvesOnVercel(route), `sitemap lists ${route}, which does not resolve to a served file`);
   });
 
+// Drafts stay in the repo but must never reach production. Anything under
+// _drafts is unapproved client-facing copy.
+assert(fs.existsSync(path.join(root, '.vercelignore')), 'Missing .vercelignore');
+assert(
+  read('.vercelignore').split(/\r?\n/).some((line) => line.trim() === '_drafts'),
+  '.vercelignore must exclude _drafts, or unapproved drafts deploy to production'
+);
+Object.entries(linkSources).forEach(([name, html]) => {
+  assert(!html.includes('_drafts'), `${name} links into _drafts, which is not deployed`);
+});
+assert(!read('sitemap.xml').includes('_drafts'), 'sitemap lists a draft');
+
 // The dead .net domain must not reappear in anything we serve.
 const servedFiles = [
   'index.html',
   'gallery/index.html',
   'contact/index.html',
   'articles/index.html',
-  'articles/what-to-ask-before-you-accept-a-quote/index.html',
   'robots.txt',
   'sitemap.xml',
   '404.html',
