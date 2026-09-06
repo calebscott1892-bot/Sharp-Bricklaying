@@ -9,7 +9,10 @@
   --terracotta-dark: #363A42;
   --sand: #F0EBE3;
   --charcoal: #1E1E1E;
-  --mortar: #7A7670;
+  /* Darkened from #7A7670 on 6 Sep 2026. Every use is body copy on sand or
+     white, where the old value measured 3.8:1 and 4.1:1. Same hue, now 4.8:1
+     on sand and 5.2:1 on white. */
+  --mortar: #6A665F;
   --white: #F7F4F0;
 }
 
@@ -1228,18 +1231,22 @@ section[id] { scroll-margin-top: 80px; }
   display: none;
 }
 
+/* Status sits on the dark green panel, so both states are tinted from the
+   palette rather than from stock red and green. The old #e74c3c error text
+   measured 2.6:1 against this background; the message you most need to read
+   was the hardest one to read. */
 .form-status.success {
   display: block;
   background: rgba(255,255,255,0.12);
   color: #fff;
-  border-left: 3px solid #2ecc71;
+  box-shadow: inset 0 3px 0 #8FC3A5;
 }
 
 .form-status.error {
   display: block;
-  background: rgba(255,255,255,0.08);
-  color: #e74c3c;
-  border-left: 3px solid #e74c3c;
+  background: rgba(255,255,255,0.12);
+  color: #F3C6BB;
+  box-shadow: inset 0 3px 0 #EE9880;
 }
 
 .btn-terracotta {
@@ -2930,3 +2937,455 @@ body.lightbox-open {
   a[href^="#"]::after { content: none; }
   a[href^="mailto"]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #666; }
 }
+
+/* ============================================================
+   MULTI-PAGE CHROME
+   Added when Gallery, Contact and Articles became their own
+   pages. Inner pages open on a dark band so the fixed nav keeps
+   the same transparent-over-dark treatment it has on the hero.
+   ============================================================ */
+
+/* ---- Themed browser surfaces -------------------------------
+   The parts we did not draw still carry the design. */
+::selection { background: var(--green); color: var(--white); }
+html { scrollbar-color: var(--green) var(--sand); }
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+.page-head :focus-visible,
+#contact :focus-visible,
+.page-cta :focus-visible,
+#footer :focus-visible {
+  outline-color: var(--sand);
+}
+input, textarea, select { caret-color: var(--green); }
+
+/* ---- Current page in the nav ------------------------------- */
+.nav-links a[aria-current="page"]::after { transform: scaleX(1); }
+#nav.scrolled .nav-links a[aria-current="page"] { color: var(--green) !important; }
+.nav-links a.nav-cta[aria-current="page"] { background: var(--terracotta-dark); }
+.mobile-menu a[aria-current="page"] { color: var(--white); }
+
+/* ---- Inner page head --------------------------------------- */
+.page-head {
+  background: var(--green);
+  padding: 152px 80px 72px;
+}
+
+.page-head__inner { max-width: 1400px; }
+
+.page-head__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(44px, 5.5vw, 78px);
+  line-height: 0.94;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #fff;
+  margin-bottom: 22px;
+}
+
+.page-head__intro {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 62ch;
+}
+
+/* ---- Breadcrumb -------------------------------------------- */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.62);
+  margin-bottom: 26px;
+}
+
+.breadcrumb a {
+  color: rgba(255, 255, 255, 0.62);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.breadcrumb a:hover { color: #fff; }
+.breadcrumb [aria-current="page"] { color: #fff; }
+.breadcrumb span[aria-hidden="true"] { opacity: 0.5; }
+
+/* ---- Contact as a full page -------------------------------- */
+#contact.contact--page { padding-top: 152px; }
+.contact-text h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(40px, 4.5vw, 64px);
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 0.95;
+  margin-bottom: 20px;
+  letter-spacing: -0.01em;
+}
+
+/* ---- What to send with an enquiry -------------------------- */
+.enquiry-guide {
+  background: var(--sand);
+  padding: 96px 80px;
+}
+
+.enquiry-guide__inner {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 72px;
+  align-items: start;
+  max-width: 1400px;
+}
+
+.enquiry-guide__lead p {
+  margin-top: 18px;
+  color: var(--mortar);
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 46ch;
+}
+
+.enquiry-guide__list { list-style: none; }
+
+.enquiry-guide__list li {
+  padding: 26px 0;
+  border-top: 1px solid rgba(27, 67, 50, 0.16);
+}
+
+.enquiry-guide__list li:last-child { border-bottom: 1px solid rgba(27, 67, 50, 0.16); }
+
+.enquiry-guide__list h3 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.01em;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+.enquiry-guide__list p {
+  color: var(--mortar);
+  font-size: 15px;
+  line-height: 1.7;
+  max-width: 58ch;
+}
+
+.enquiry-guide__list a { color: var(--green); text-underline-offset: 3px; }
+
+/* ---- Closing CTA on inner pages ---------------------------- */
+.page-cta {
+  background: var(--green);
+  padding: 88px 80px;
+}
+
+.page-cta__inner { max-width: 1400px; }
+
+.page-cta__title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(34px, 3.6vw, 52px);
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 0.98;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+
+.page-cta__text {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 58ch;
+  margin-bottom: 32px;
+}
+
+.page-cta__actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.page-cta__actions .btn-terracotta { text-decoration: none; display: inline-block; }
+
+.page-cta__phone {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  padding-bottom: 2px;
+  transition: border-color 0.2s;
+}
+
+.page-cta__phone:hover { border-bottom-color: #fff; }
+
+/* ============================================================
+   HOME PAGE: FEATURED WORK
+   Three projects, one leading. Captions sit under the image so
+   type never has to fight a photograph.
+   ============================================================ */
+.featured { max-width: 1500px; }
+
+.featured__head { margin-bottom: 56px; }
+
+.featured__intro {
+  margin-top: 18px;
+  font-size: 15px;
+  color: var(--mortar);
+  line-height: 1.75;
+  max-width: 620px;
+}
+
+.featured__grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  grid-template-rows: 340px 340px;
+  gap: 2px;
+}
+
+.featured__item {
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  text-decoration: none;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.featured__item--lead { grid-row: span 2; }
+
+.featured__media {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--charcoal);
+}
+
+.featured__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.featured__item:hover .featured__media img,
+.featured__item:focus-visible .featured__media img { transform: scale(1.04); }
+
+.featured__meta {
+  display: block;
+  padding: 20px 24px 24px;
+}
+
+.featured__suburb {
+  display: block;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--mortar);
+  margin-bottom: 6px;
+}
+
+.featured__name {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 800;
+  font-size: 27px;
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+.featured__desc {
+  display: block;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--mortar);
+  max-width: 52ch;
+}
+
+.featured__item--lead .featured__name { font-size: 34px; }
+.featured__item--lead .featured__meta { padding: 24px 28px 28px; }
+
+.featured__all {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 44px;
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--green);
+  text-decoration: none;
+  border-bottom: 2px solid var(--green);
+  padding-bottom: 8px;
+}
+
+.featured__all svg { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+.featured__all:hover svg { transform: translateX(6px); }
+
+/* ============================================================
+   HOME PAGE: CONTACT BAND
+   The full form lives on /contact. This is the invitation.
+   ============================================================ */
+#contact.contact--band {
+  display: block;
+  padding: 88px 80px;
+}
+
+.contact-band {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 72px;
+  align-items: center;
+  max-width: 1500px;
+}
+
+.contact-band__text h2 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: clamp(38px, 4.2vw, 60px);
+  text-transform: uppercase;
+  color: #fff;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  margin-bottom: 20px;
+}
+
+.contact-band__text p {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 15px;
+  line-height: 1.75;
+  max-width: 58ch;
+  margin-bottom: 32px;
+}
+
+.contact-band__actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.contact-band__actions .btn-terracotta { text-decoration: none; display: inline-block; }
+
+.contact-band__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  padding-bottom: 2px;
+  transition: border-color 0.2s;
+}
+
+.contact-band__phone svg { width: 19px; height: 19px; flex-shrink: 0; }
+.contact-band__phone:hover { border-bottom-color: #fff; }
+
+.contact-band__social {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.contact-band__social .contact-ig { width: 100%; }
+
+.contact-band__email {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 15px;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.contact-band__email svg { width: 19px; height: 19px; flex-shrink: 0; }
+.contact-band__email:hover { color: #fff; }
+
+/* ---- Responsive -------------------------------------------- */
+@media (max-width: 1100px) {
+  .featured__grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .featured__item--lead { grid-row: auto; }
+  .featured__media { height: 300px; flex: 0 0 auto; }
+  .featured__item--lead .featured__media { height: 420px; }
+  .enquiry-guide__inner { grid-template-columns: 1fr; gap: 40px; }
+  .contact-band { grid-template-columns: 1fr; gap: 48px; align-items: start; }
+}
+
+@media (max-width: 900px) {
+  .page-head { padding: 128px 32px 56px; }
+  #contact.contact--page { padding-top: 128px; }
+  #contact.contact--band { padding: 64px 32px; }
+  .enquiry-guide { padding: 64px 32px; }
+  .page-cta { padding: 64px 32px; }
+  .featured__media { height: 260px; }
+  .featured__item--lead .featured__media { height: 340px; }
+}
+
+@media (max-width: 640px) {
+  .page-head { padding: 116px 24px 48px; }
+  .page-head__intro { font-size: 14.5px; }
+  .breadcrumb { font-size: 10px; letter-spacing: 0.18em; margin-bottom: 20px; }
+  #contact.contact--page { padding-top: 116px; }
+  #contact.contact--band { padding: 56px 24px; }
+  .enquiry-guide { padding: 56px 24px; }
+  .page-cta { padding: 56px 24px; }
+  .featured__grid { gap: 20px; }
+  .featured__media { height: 230px; }
+  .featured__item--lead .featured__media { height: 280px; }
+  .featured__item--lead .featured__name { font-size: 28px; }
+  .featured__meta,
+  .featured__item--lead .featured__meta { padding: 16px 18px 20px; }
+  .featured__all { margin-top: 32px; }
+  .page-cta__actions,
+  .contact-band__actions { gap: 20px; }
+  .page-cta__phone,
+  .contact-band__phone { font-size: 21px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .featured__media img,
+  .featured__all svg { transition: none !important; }
+  .featured__item:hover .featured__media img { transform: none; }
+}
+
+/* ---- Inner-page nav logo ------------------------------------
+   The wordmark ships in two inks. Inner pages open on the green
+   band, so they lead with the white one and swap to the green
+   one once the nav turns solid. */
+.nav-logo__on-dark,
+.nav-logo__on-light { display: block; }
+body.inner-page .nav-logo__on-light { display: none; }
+body.inner-page #nav.scrolled .nav-logo__on-dark { display: none; }
+body.inner-page #nav.scrolled .nav-logo__on-light { display: block; }

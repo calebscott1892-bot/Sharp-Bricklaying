@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /uploads/
 
-Sitemap: https://sharpbricklaying.net/sitemap.xml
+Sitemap: https://sharpbricklaying.com.au/sitemap.xml

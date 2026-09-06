@@ -2,10 +2,25 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const css = fs.readFileSync(path.join(root, 'css', 'styles.css'), 'utf8');
+
+// The site is multi-page: the portfolio lives on /gallery, the enquiry form on
+// /contact, and the home page carries a featured-work teaser plus a contact
+// band. Each assertion below names the page it belongs to.
+const pages = {
+  home:    read('index.html'),
+  gallery: read('gallery/index.html'),
+  contact: read('contact/index.html')
+};
+
+const css = read('css/styles.css');
 
 const panelMediaExclusions = {};
+
+function read(relativePath) {
+  const full = path.join(root, relativePath);
+  if (!fs.existsSync(full)) fail(`Missing file: ${relativePath}`);
+  return fs.readFileSync(full, 'utf8');
+}
 
 function fail(message) {
   throw new Error(message);
@@ -32,8 +47,8 @@ function normalize(value) {
 
 function getPanel(panelId) {
   const pattern = new RegExp(`<article class="gallery-job-panel[^"]*" id="${panelId}"[\\s\\S]*?(?=\\n    <article class="gallery-job-panel"|\\n  </div>\\s*?</section>)`);
-  const match = html.match(pattern);
-  if (!match) fail(`Missing panel ${panelId}`);
+  const match = pages.gallery.match(pattern);
+  if (!match) fail(`Missing panel ${panelId} on /gallery`);
   return match[0];
 }
 
@@ -57,12 +72,13 @@ function assertPanelHasFolder(panelId, relativeDir) {
   const files = imageFiles(relativeDir).filter((file) => !exclusions.includes(file));
 
   files.forEach((file) => {
-    const src = `${relativeDir}/${file}`;
+    // Pages below the root reference media root-relative.
+    const src = `/${relativeDir}/${file}`;
     assert(panel.includes(src), `${panelId} missing ${src}`);
   });
 
   exclusions.forEach((file) => {
-    const src = `${relativeDir}/${file}`;
+    const src = `/${relativeDir}/${file}`;
     assert(!panel.includes(src), `${panelId} should not include ${src}`);
   });
 
@@ -82,12 +98,12 @@ function assertPanelHasVideoFolder(panelId, relativeDir) {
   const files = videoFiles(relativeDir).filter((file) => !exclusions.includes(file));
 
   files.forEach((file) => {
-    const src = `${relativeDir}/${file}`;
+    const src = `/${relativeDir}/${file}`;
     assert(panel.includes(src), `${panelId} missing ${src}`);
   });
 
   exclusions.forEach((file) => {
-    const src = `${relativeDir}/${file}`;
+    const src = `/${relativeDir}/${file}`;
     assert(!panel.includes(src), `${panelId} should not include ${src}`);
   });
 
@@ -101,20 +117,24 @@ function assertPanelHasVideoFolder(panelId, relativeDir) {
   );
 }
 
-function assertLocalMediaExists() {
+function assertLocalMediaExists(pageName, html) {
   const mediaRefs = html.matchAll(/\b(?:src|poster)="([^"]+)"/g);
 
   for (const match of mediaRefs) {
     const ref = match[1];
-    if (/^(https?:|data:|mailto:|tel:|#)/i.test(ref)) continue;
-    assert(fs.existsSync(path.join(root, ref)), `Missing local media: ${ref}`);
+    if (/^(https?:|data:|mailto:|tel:|#)/i.test(ref) || ref === '') continue;
+    const relative = ref.startsWith('/') ? ref.slice(1) : ref;
+    assert(fs.existsSync(path.join(root, relative)), `${pageName}: missing local media ${ref}`);
   }
 }
 
 function assertTabsTargetPanels() {
-  const panelIds = new Set([...html.matchAll(/<article class="gallery-job-panel[^"]*" id="([^"]+)"/g)].map((match) => match[1]));
-  const tabTargets = [...html.matchAll(/data-job-tab="([^"]+)"/g)].map((match) => match[1]);
+  const panelIds = new Set(
+    [...pages.gallery.matchAll(/<article class="gallery-job-panel[^"]*" id="([^"]+)"/g)].map((match) => match[1])
+  );
+  const tabTargets = [...pages.gallery.matchAll(/data-job-tab="([^"]+)"/g)].map((match) => match[1]);
 
+  assert(tabTargets.length > 0, '/gallery has no job tabs');
   tabTargets.forEach((target) => {
     assert(panelIds.has(target), `Gallery tab targets missing panel: ${target}`);
   });
@@ -142,33 +162,103 @@ const mudboardsLogoPath = 'images/Sponsors and Affiliates Logo/mudboards_badge_t
 const brickieGripLogoPath = 'images/Sponsors and Affiliates Logo/brickie_grip_logo.jpg';
 const affiliateLinkCss = css.match(/\.footer-affiliate-link\s*\{[\s\S]*?\}/)?.[0] || '';
 
-const normalizedHtml = normalize(html);
+const normalized = {
+  home: normalize(pages.home),
+  gallery: normalize(pages.gallery),
+  contact: normalize(pages.contact)
+};
 
-assert(!html.includes('<section id="before-after">'), 'The Process section still exists');
-assert(!html.includes('href="#before-after"'), 'Navigation still links to The Process');
-assertLocalMediaExists();
+// ── Structure ────────────────────────────────────────────────
+assert(!pages.home.includes('<section id="before-after">'), 'The Process section still exists');
+assert(!pages.home.includes('href="#before-after"'), 'Navigation still links to The Process');
+
+Object.entries(pages).forEach(([name, html]) => assertLocalMediaExists(name, html));
 assertTabsTargetPanels();
 
-requiredDescriptions.forEach((description) => {
-  assert(normalizedHtml.includes(description), `Missing description: ${description}`);
+// ── Multi-page wiring ────────────────────────────────────────
+// Every page reaches every other page, and the canonical is the live domain.
+const canonicals = {
+  home: 'https://sharpbricklaying.com.au/',
+  gallery: 'https://sharpbricklaying.com.au/gallery',
+  contact: 'https://sharpbricklaying.com.au/contact'
+};
+
+Object.entries(canonicals).forEach(([name, url]) => {
+  assert(
+    pages[name].includes(`<link rel="canonical" href="${url}">`),
+    `${name} page is missing canonical ${url}`
+  );
 });
 
-assert(normalizedHtml.includes(requiredQuote), 'Missing updated Luke Sharp quote');
-assert(normalizedHtml.includes(requiredContactHeading), 'Missing updated contact heading');
-assert(normalizedHtml.includes(requiredContactText), 'Missing updated contact text');
-assert(html.includes('<h4>Sponsors &amp; Affiliates</h4>'), 'Missing Sponsors & Affiliates heading');
-assert(html.includes('href="https://mudboards.com.au/"'), 'Missing Mudboards sponsor link');
-assert(html.includes(`src="${mudboardsLogoPath}"`), 'Missing Mudboards sponsor logo');
-assert(html.includes('data-sponsor-profile-open'), 'Missing Mudboards sponsor profile trigger');
-assert(html.includes('id="sponsor-profile-modal"'), 'Missing Mudboards sponsor profile modal');
-assert(normalizedHtml.includes('Mudboards Australia is bringing a smarter alternative to the standard ply and metal mudboards seen across site'), 'Missing Mudboards sponsor profile extract');
-assert(/background:\s*transparent;/.test(affiliateLinkCss), 'Mudboards sponsor link must keep a transparent background');
-assert(html.includes('href="https://www.brickiegrip.com.au/"'), 'Missing BrickieGrip sponsor link');
-assert(html.includes(`src="${brickieGripLogoPath}"`), 'Missing BrickieGrip sponsor logo');
-assert(html.includes('aria-controls="sponsor-profile-modal-brickiegrip"'), 'Missing BrickieGrip sponsor profile trigger');
-assert(html.includes('id="sponsor-profile-modal-brickiegrip"'), 'Missing BrickieGrip sponsor profile modal');
-assert(normalizedHtml.includes("BrickieGrip is a durable over-grip designed to wrap around your bricklayer's trowel handle"), 'Missing BrickieGrip sponsor profile extract');
+Object.entries(pages).forEach(([name, html]) => {
+  assert(html.includes('href="/gallery"'), `${name} page does not link to /gallery`);
+  assert(html.includes('href="/contact"'), `${name} page does not link to /contact`);
+  assert(html.includes('href="/articles/"'), `${name} page does not link to /articles/`);
+  assert(html.includes('id="nav"'), `${name} page is missing the main nav`);
+  assert(html.includes('id="footer"'), `${name} page is missing the footer`);
+});
 
+// The dead .net domain must not reappear in anything we serve.
+const servedFiles = [
+  'index.html',
+  'gallery/index.html',
+  'contact/index.html',
+  'articles/index.html',
+  'articles/what-to-ask-before-you-accept-a-quote.html',
+  'robots.txt',
+  'sitemap.xml',
+  '404.html',
+  'privacy.html'
+];
+servedFiles.forEach((file) => {
+  const full = path.join(root, file);
+  if (!fs.existsSync(full)) return;
+  assert(
+    !fs.readFileSync(full, 'utf8').includes('sharpbricklaying.net'),
+    `${file} still references the dead sharpbricklaying.net domain`
+  );
+});
+
+assert(pages.contact.includes('id="contact-form"'), '/contact is missing the enquiry form');
+assert(!pages.home.includes('id="contact-form"'), 'Home page should link to /contact, not duplicate the form');
+
+// ── Copy ─────────────────────────────────────────────────────
+requiredDescriptions.forEach((description) => {
+  assert(normalized.gallery.includes(description), `/gallery missing description: ${description}`);
+});
+
+assert(normalized.home.includes(requiredQuote), 'Missing updated Luke Sharp quote');
+
+[['home', normalized.home], ['contact', normalized.contact]].forEach(([name, text]) => {
+  assert(text.includes(requiredContactHeading), `${name} page missing contact heading`);
+  assert(text.includes(requiredContactText), `${name} page missing contact text`);
+});
+
+// ── Sponsors (footer, on every page) ─────────────────────────
+Object.entries(pages).forEach(([name, html]) => {
+  const text = normalized[name];
+  assert(html.includes('<h4>Sponsors &amp; Affiliates</h4>'), `${name}: missing Sponsors & Affiliates heading`);
+  assert(html.includes('href="https://mudboards.com.au/"'), `${name}: missing Mudboards sponsor link`);
+  assert(html.includes(mudboardsLogoPath), `${name}: missing Mudboards sponsor logo`);
+  assert(html.includes('data-sponsor-profile-open'), `${name}: missing sponsor profile trigger`);
+  assert(html.includes('id="sponsor-profile-modal"'), `${name}: missing Mudboards sponsor profile modal`);
+  assert(
+    text.includes('Mudboards Australia is bringing a smarter alternative to the standard ply and metal mudboards seen across site'),
+    `${name}: missing Mudboards sponsor profile extract`
+  );
+  assert(html.includes('href="https://www.brickiegrip.com.au/"'), `${name}: missing BrickieGrip sponsor link`);
+  assert(html.includes(brickieGripLogoPath), `${name}: missing BrickieGrip sponsor logo`);
+  assert(html.includes('aria-controls="sponsor-profile-modal-brickiegrip"'), `${name}: missing BrickieGrip profile trigger`);
+  assert(html.includes('id="sponsor-profile-modal-brickiegrip"'), `${name}: missing BrickieGrip profile modal`);
+  assert(
+    text.includes("BrickieGrip is a durable over-grip designed to wrap around your bricklayer's trowel handle"),
+    `${name}: missing BrickieGrip sponsor profile extract`
+  );
+});
+
+assert(/background:\s*transparent;/.test(affiliateLinkCss), 'Mudboards sponsor link must keep a transparent background');
+
+// ── Gallery media ────────────────────────────────────────────
 [
   ['job-panel-broome', 'images/Broome St'],
   ['job-panel-branksome', 'images/Branksome Gardens, City Beach'],
@@ -189,5 +279,10 @@ assertPanelHasVideoFolder('job-panel-subiaco-glass', 'images/Subiaco Glass');
 assertPanelHasVideoFolder('job-panel-coolbinia', 'images/Coolbinia');
 
 assert(!getPanel('job-panel-branksome').includes('images/number 6/'), 'Branksome panel still uses old number 6 photos');
+
+// ── Featured work on the home page ───────────────────────────
+const featuredCount = (pages.home.match(/class="featured__item/g) || []).length;
+assert(featuredCount === 3, `Home page should feature 3 projects, found ${featuredCount}`);
+assert(pages.home.includes('class="featured__all"'), 'Home page missing the link through to the full portfolio');
 
 console.log('Content validation passed.');

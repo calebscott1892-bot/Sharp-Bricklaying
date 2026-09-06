@@ -136,6 +136,38 @@
     });
   });
 
+  // ─── PRE-FILL FROM ?service= (service card → /contact) ──
+  // The service cards live on the home page; the form lives on /contact.
+  // They hand the choice over in the query string.
+  (function () {
+    var projectSelect = document.getElementById('form-project');
+    if (!projectSelect) return;
+
+    var match = /[?&]service=([^&]*)/.exec(window.location.search);
+    if (!match) return;
+
+    var service;
+    try { service = decodeURIComponent(match[1].replace(/\+/g, ' ')); } catch (e) { return; }
+
+    // Only echo a value that matches a real option, so nothing from the URL
+    // reaches the page unchecked.
+    var matched = null;
+    for (var i = 0; i < projectSelect.options.length; i++) {
+      if (projectSelect.options[i].value === service) {
+        projectSelect.selectedIndex = i;
+        matched = projectSelect.options[i].text;
+        break;
+      }
+    }
+    if (!matched) return;
+
+    var messageField = document.getElementById('form-message');
+    if (messageField && !messageField.value.trim()) {
+      messageField.value = "Hi, I'm interested in your " + matched + ' work. ';
+      messageField.placeholder = '';
+    }
+  })();
+
   // ─── PARALLAX HERO (continued) ────────────────────────
   var heroBg = document.getElementById('hero-bg');
   if (heroBg && !prefersReducedMotion) {
