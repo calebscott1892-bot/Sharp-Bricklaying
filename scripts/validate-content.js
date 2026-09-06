@@ -198,13 +198,50 @@ Object.entries(pages).forEach(([name, html]) => {
   assert(html.includes('id="footer"'), `${name} page is missing the footer`);
 });
 
+// Every internal link must resolve to a file Vercel will actually serve.
+// `npx serve` resolves extensionless URLs and Vercel does not, so a link that
+// works locally can still 404 in production. Routes here come from directories.
+function resolvesOnVercel(href) {
+  const clean = href.split('#')[0].split('?')[0];
+  if (clean === '' || clean === '/') return fs.existsSync(path.join(root, 'index.html'));
+  const rel = clean.replace(/^\//, '').replace(/\/$/, '');
+  return (
+    fs.existsSync(path.join(root, rel)) ||
+    fs.existsSync(path.join(root, `${rel}.html`)) ||
+    fs.existsSync(path.join(root, rel, 'index.html'))
+  );
+}
+
+const linkSources = {
+  home: pages.home,
+  gallery: pages.gallery,
+  contact: pages.contact,
+  articles: read('articles/index.html'),
+  article: read('articles/what-to-ask-before-you-accept-a-quote/index.html')
+};
+
+Object.entries(linkSources).forEach(([name, html]) => {
+  const hrefs = [...html.matchAll(/href="(\/[^"]*)"/g)].map((m) => m[1]);
+  new Set(hrefs).forEach((href) => {
+    assert(resolvesOnVercel(href), `${name} links to ${href}, which does not resolve to a served file`);
+  });
+});
+
+// Sitemap URLs must resolve too, or we are advertising 404s to Google.
+const sitemap = read('sitemap.xml');
+[...sitemap.matchAll(/<loc>https:\/\/sharpbricklaying\.com\.au(\/[^<]*)<\/loc>/g)]
+  .map((m) => m[1])
+  .forEach((route) => {
+    assert(resolvesOnVercel(route), `sitemap lists ${route}, which does not resolve to a served file`);
+  });
+
 // The dead .net domain must not reappear in anything we serve.
 const servedFiles = [
   'index.html',
   'gallery/index.html',
   'contact/index.html',
   'articles/index.html',
-  'articles/what-to-ask-before-you-accept-a-quote.html',
+  'articles/what-to-ask-before-you-accept-a-quote/index.html',
   'robots.txt',
   'sitemap.xml',
   '404.html',

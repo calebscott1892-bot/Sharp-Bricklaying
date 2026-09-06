@@ -38,6 +38,8 @@ The About section photo has `luke@sharpbricklaying.net` burned into the image. I
 
 Serve with `npm run dev` (`npx serve -l 3000`). Root-relative paths break under `file://`, so never verify by opening the file directly.
 
+**`npx serve` is more forgiving than Vercel.** It resolves `/foo` to `foo.html`; Vercel does not, and `cleanUrls` is off. An extensionless link can pass locally and 404 in production, which is exactly how the first article shipped broken on 6 Sep 2026. Every route is a directory with an `index.html`, and the validator now checks that every internal link and every sitemap URL resolves to a real file. After any push, curl the live URL rather than trusting the local server.
+
 ## Standing rules that bite here
 Never fabricate a testimonial, review or figure. Use a visible `[PLACEHOLDER]` marker instead.
 Verify in a real browser or with curl before reporting anything as done. Reading the source is not verification.
